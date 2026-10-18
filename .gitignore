@@ -1,0 +1,47 @@
+# ============ Unity 生成目录（不要提交） ============
+/ECS-Test/[Ll]ibrary/
+/ECS-Test/[Tt]emp/
+/ECS-Test/[Oo]bj/
+/ECS-Test/[Bb]uild/
+/ECS-Test/[Bb]uilds/
+/ECS-Test/[Ll]ogs/
+/ECS-Test/[Uu]ser[Ss]ettings/
+/ECS-Test/[Mm]emoryCaptures/
+/ECS-Test/[Rr]ecordings/
+
+# ============ Unity 自动生成的 C# 工程文件 ============
+# 由编辑器每次打开时重新生成，不需要提交
+/ECS-Test/*.csproj
+/ECS-Test/*.sln
+/ECS-Test/*.user
+
+# ============ 构建产物 ============
+*.apk
+*.aab
+*.unitypackage
+*.crashreport
+crashlytics-build.properties
+sysinfo.txt
+
+# ============ IDE / 编辑器 ============
+.vs/
+.idea/
+.vscode/
+*.suo
+*.userprefs
+*.pidb
+*.pidb.meta
+*.pdb
+*.pdb.meta
+*.mdb
+*.mdb.meta
+*.booproj
+*.svd
+
+# ============ 系统文件 ============
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ============ Asset Store 工具缓存 ============
+/ECS-Test/[Aa]ssets/AssetStoreTools*

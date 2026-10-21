@@ -10,13 +10,20 @@ public class CameraManager
     private float heightSpeed = 70;
 
     private float defaultHeight;
-    
+
+    private float yaw;
+    private float pitch;
+
     public CameraManager(MoveCameraInputAction inputAction, Transform cameraTransform)
     {
         this.inputAction = inputAction;
         transform = cameraTransform;
         defaultHeight = cameraTransform.position.y;
-        
+
+        Vector3 e = cameraTransform.eulerAngles;
+        yaw = e.y;
+        pitch = Mathf.DeltaAngle(0f, e.x);
+
         inputAction.Enable();
         inputAction.Action.Enable();
         inputAction.Action.Move.Enable();
@@ -33,19 +40,19 @@ public class CameraManager
     private void Move(float dt)
     {
         Vector2 v = inputAction.Action.Move.ReadValue<Vector2>();
-        Quaternion flat = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+        Quaternion flat = Quaternion.Euler(0f, yaw, 0f);
         transform.position += flat * new Vector3(v.x, 0f, v.y) * (moveSpeed * dt);
     }
 
     private void Rotate(float dt)
     {
         Vector2 v = inputAction.Action.Rotate.ReadValue<Vector2>();
-        //上下
-        float current = Mathf.DeltaAngle(0f, transform.eulerAngles.x);
-        float target  = Mathf.Clamp(current - v.y * rotateSpeed * dt, 0f, 90f);
-        transform.Rotate(target - current, 0f, 0f, Space.Self);
-        //左右
-        transform.Rotate(0f, v.x * rotateSpeed * dt, 0f, Space.World);
+
+        pitch = Mathf.Clamp(pitch - v.y * rotateSpeed * dt, 0f, 90f);
+        yaw += v.x * rotateSpeed * dt;
+
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
     }
 
     private void MoveHeight(float dt)

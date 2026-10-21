@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5598816726883842529}
   - component: {fileID: 2941482166463546638}
   - component: {fileID: 5164867088436609125}
+  - component: {fileID: 4759736345236427185}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -133,7 +134,7 @@ Rigidbody:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 320
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
@@ -141,3 +142,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &4759736345236427185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2906318660841047742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88e62983cd5072c4c8afe3ca1c6d4912, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ECSFrame.UnitAuthoring
+  kind: 0
+  speed: 10
+  walkCD: 10
+  idleCD: 15
+  atkCD: 0.2
+  money: 25

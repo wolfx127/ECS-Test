@@ -14,11 +14,13 @@ namespace GameObjectFrame
         public Dictionary<GameObject, EnemyData> enemyDic;
         private int capacity = 1;
         private int size = 0;
+        private int maxEnemies = 10000;
+        private int spawnPerFrame = 10;
         
         private Stack<GameObject> pool = new Stack<GameObject>();
 
         public EnemyPool(GameObject player, GameObject defaultEnemy, GameObject enemyPoolGo, 
-            QuadTreeMgr quadTreeMgr, GameObject Prop)
+            QuadTreeMgr quadTreeMgr, GameObject Prop, int maxEnemies = 10000, int spawnPerFrame = 10)
         {
             this.player = player;
             this.defaultEnemy = defaultEnemy;
@@ -27,11 +29,14 @@ namespace GameObjectFrame
             enemyList = new HashSet<EnemyData>();
             enemyDic = new Dictionary<GameObject, EnemyData>();
             this.Prop = Prop;
+            this.maxEnemies = Mathf.Max(1, maxEnemies);
+            this.spawnPerFrame = Mathf.Max(0, spawnPerFrame);
         }
 
         public void Tick()
         {
-            for (int i = 0; i < 10; i++)
+            int n = Mathf.Clamp(spawnPerFrame, 0, maxEnemies - enemyList.Count);
+            for (int i = 0; i < n; i++)
             {
                 CreateEnemy();
             }
@@ -45,10 +50,22 @@ namespace GameObjectFrame
             }
         }
 
+        public int MaxEnemies
+        {
+            get => maxEnemies;
+            set => maxEnemies = Mathf.Max(1, value);
+        }
+
+        public int SpawnPerFrame
+        {
+            get => spawnPerFrame;
+            set => spawnPerFrame = Mathf.Max(0, value);
+        }
+
 
         private void AddCapacity()
         {
-            if (size >= 10000)
+            if (size >= maxEnemies)
             {
                 Debug.Log("对象池已达上限: " + size);
                 return;
@@ -63,11 +80,10 @@ namespace GameObjectFrame
                 EnemyData data = new EnemyData(enemy, player.transform,
                     new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized, quadTreeMgr, 
                     this, Prop);
-                enemyList.Add(data);
                 enemyDic[enemy] = data;
                 pool.Push(enemy);
                 size++;
-                if (size >= 10000) return;
+                if (size >= maxEnemies) return;
             }
             Debug.Log("扩容: " + capacity);
             capacity *= 2;

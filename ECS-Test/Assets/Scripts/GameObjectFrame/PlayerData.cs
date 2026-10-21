@@ -9,6 +9,8 @@ namespace GameObjectFrame
         private GameObject player;
         private QuadTreeMgr quadTreeMgr;
         private EnemyPool enemyPool;
+        private Camera cam;
+        private Rigidbody rb = null;
         
         private List<GameObject> hatedEnemies = new List<GameObject>();
         private float hateRadius = 30f;
@@ -20,14 +22,16 @@ namespace GameObjectFrame
         private float catchRadius = 7f;
         private Collider[] props = new Collider[64];
         static readonly int propMask = LayerMask.GetMask("Prop");
+        static readonly int groundMask = LayerMask.GetMask("Ground");
 
         public int money = 0;
         
-        public PlayerData(GameObject player, QuadTreeMgr quadTreeMgr, EnemyPool enemyPool)
+        public PlayerData(GameObject player, QuadTreeMgr quadTreeMgr, EnemyPool enemyPool, Camera cam)
         {
             this.player = player;
             this.quadTreeMgr = quadTreeMgr;
-            this.enemyPool = enemyPool;   // ← 之前漏了这行，字段是 null 会 NRE
+            this.enemyPool = enemyPool;
+            this.cam = cam;
         }
 
         public void Tick(float dt)
@@ -69,6 +73,35 @@ namespace GameObjectFrame
             {
                 money += 25;
                 Object.Destroy(props[i].gameObject);
+            }
+
+            if (Mouse.current.leftButton.wasReleasedThisFrame)
+            {
+                if (!cam) cam = Object.FindFirstObjectByType<Camera>();
+
+                if (cam)
+                {
+                    Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+                    Vector3 v;
+                    if (groundMask != 0 && Physics.Raycast(ray, out RaycastHit hit, 1000f, groundMask))
+                        v = hit.point;
+                    else
+                        return;
+
+                    v.y += 10f;
+
+                    v.x = Mathf.Clamp(v.x, -200f, 200f);
+                    v.z = Mathf.Clamp(v.z, -200f, 200f);
+
+                    if (!rb) rb = player.GetComponent<Rigidbody>();
+                    if (rb)
+                    {
+                        rb.position = v;
+                        rb.linearVelocity = Vector3.zero;
+                        rb.angularVelocity = Vector3.zero;
+                    }
+                }
             }
         }
     }

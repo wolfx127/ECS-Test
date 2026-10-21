@@ -1,6 +1,11 @@
+using Unity.IntegerTime;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class PropData
+namespace GameObjectFrame
 {
-    
+    public class PropData
+    {
+        
+    }
 }

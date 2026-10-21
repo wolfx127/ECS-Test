@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using ECSFrame;
 using GameObjectFrame;
+using Unity.Entities;
+using Unity.Scenes;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 //起到一个分发器的作用，
 //因为多个mono的生命周期会打架，所以只用一个mono
@@ -11,6 +15,14 @@ using UnityEngine.InputSystem;
 public class MonoManager : MonoBehaviour
 {
     public bool UseECS = false;
+    public SubScene subScene;
+    private Entity modeEntity = Entity.Null;
+
+    public int maxEnemies = 10000;
+
+    public int spawnPerFrame = 10;
+
+    
     public bool UseMono = false;
     public HashSet<EnemyData> enemyList;
     public int playerMoney = 0;
@@ -22,6 +34,7 @@ public class MonoManager : MonoBehaviour
     public GameObject defaultEnemyPfb;
     public GameObject player;
     public GameObject prop;
+    public GameObject Terrian;
 
     //被注入名单
     private CameraManager cameraMgr;
@@ -39,13 +52,16 @@ public class MonoManager : MonoBehaviour
         {
             UseECS = false;
             quadTreeMgr = new QuadTreeMgr();
-            enemyPool = new EnemyPool(player, defaultEnemyPfb, enemyPoolGO, quadTreeMgr, prop);
-            playerData = new PlayerData(player, quadTreeMgr, enemyPool);
+            enemyPool = new EnemyPool(player, defaultEnemyPfb, enemyPoolGO, quadTreeMgr, prop, maxEnemies, spawnPerFrame);
+            playerData = new PlayerData(player, quadTreeMgr, enemyPool, cameraGO.GetComponent<Camera>());
         }
 
         if (UseECS)
         {
             UseMono = false;
+            player.SetActive(false);
+            Terrian.SetActive(false);
+            StirECS();
         }
     }
 
@@ -71,10 +87,30 @@ public class MonoManager : MonoBehaviour
     {
         if (UseMono)
         {
+            if(Physics.simulationMode != SimulationMode.FixedUpdate)
+                Physics.simulationMode = SimulationMode.FixedUpdate;
+
+            if (enemyPool != null)
+            {
+                enemyPool.MaxEnemies = maxEnemies;
+                enemyPool.SpawnPerFrame = spawnPerFrame;
+            }
+
             enemyPool.Tick();
             quadTreeMgr.Tick(Time.deltaTime);
             playerData.Tick(Time.deltaTime);
             playerMoney = playerData.money;
+        }
+
+        if (UseECS)
+        {
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world != null && world.IsCreated && modeEntity != Entity.Null &&
+                world.EntityManager.Exists(modeEntity))
+            {
+                world.EntityManager.SetComponentData(modeEntity, new MaxEnemies_comp { value = maxEnemies });
+                world.EntityManager.SetComponentData(modeEntity, new SpawnPerFrame_comp { value = spawnPerFrame });
+            }
         }
     }
 
@@ -83,7 +119,7 @@ public class MonoManager : MonoBehaviour
         if(UseMono)
         {
             if (enemyPool == null) return;
-            enemyPool.FixedTick(Time.deltaTime);
+            enemyPool.FixedTick(Time.fixedDeltaTime);
         }
     }
 
@@ -91,11 +127,27 @@ public class MonoManager : MonoBehaviour
     {
         cameraMgr.Tick(Time.deltaTime);
     }
-
     
+    //激活ECS
+    private void StirECS()
+    {
+        if (!UseECS) return;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
+
+        if (modeEntity == Entity.Null)
+        {
+            modeEntity = world.EntityManager.CreateEntity(
+                typeof(ECSModeTag_comp), typeof(MaxEnemies_comp), typeof(SpawnPerFrame_comp));
+            world.EntityManager.SetComponentData(modeEntity, new MaxEnemies_comp { value = maxEnemies });
+            world.EntityManager.SetComponentData(modeEntity, new SpawnPerFrame_comp { value = spawnPerFrame });
+        }
+    }
+
+
     // 四叉树调试
     [SerializeField] int gizmoMaxDepth = 6;
-    [SerializeField] float gizmoBlockHeight = 0.3f;   // 每层方块的厚度
+    [SerializeField] float gizmoBlockHeight = 0.3f;
     private void OnDrawGizmos()
     {
         if (!UseMono || quadTreeMgr == null) return;
@@ -109,9 +161,8 @@ public class MonoManager : MonoBehaviour
 
         int span = Mathf.Max(1, gizmoMaxDepth - 1);
         float t = Mathf.Clamp01((float)(node.curDepth - 1) / span);
-        Gizmos.color = Color.Lerp(Color.green, Color.blue, t);   // 绿 → 蓝，越深越蓝
+        Gizmos.color = Color.Lerp(Color.green, Color.blue, t);   //越深越蓝
 
-        // 实心方块：深度越深方块越厚，绿底座上叠蓝色高塔
         float height = gizmoBlockHeight * node.curDepth;
         Vector3 center = new Vector3(node.pA.x + w * 0.5f, height * 0.5f, node.pA.y + d * 0.5f);
         Gizmos.DrawCube(center, new Vector3(w, height, d));

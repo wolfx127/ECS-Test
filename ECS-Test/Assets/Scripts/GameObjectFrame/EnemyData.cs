@@ -34,6 +34,8 @@ namespace GameObjectFrame
         private bool isIdle = false;
         private bool  isPursue = false;
 
+        private bool isBack = false;
+
         public void Tick(float dt)
         {
             if (isPursue)
@@ -45,42 +47,51 @@ namespace GameObjectFrame
                 return;
             }
 
+            Vector3 pos = gameObject.transform.position;
+            if (!isBack && (pos.x < -200 || pos.x > 200 || pos.z < -200 || pos.z > 200))
+            {
+                isBack = true;
+                Vector2 back = new Vector2(-pos.x, -pos.z);
+                if (back.sqrMagnitude < 1e-6f) back = Vector2.up;
+                forward = back.normalized;
+                isWalk = true;
+                isIdle = false;
+                walkTimeCounter = -10;
+            }
+
+            if (!(pos.x < -200 || pos.x > 200 || pos.z < -200 || pos.z > 200)) isBack = false;
+
             if (isWalk && walkTimeCounter < walkCD)
             {
                 Vector3 v = gameObject.transform.position +
                             new Vector3(dt * walkSpeed * forward.x, 0, dt * walkSpeed * forward.y);
-                Vector3 p = gameObject.transform.position;
-                if ((p.x < -200 || p.z < -200 || p.x > 200 || p.z > 200) && 
-                    (v.x < -200 || v.z < -200 || v.x > 200 || v.z > 200))
-                {
-                    walkTimeCounter = -10;
-                    isWalk = false;
-                    isIdle = true;
-                    forward = new Vector2(-forward.x, -forward.y);
-                    return;
-                }
                 rigidbody.MovePosition(v);
                 walkTimeCounter += dt;
                 quadTreeMgr.Update(gameObject);
             }
-            else
+            else if(isWalk && walkTimeCounter >= walkCD)
             {
                 walkTimeCounter = 0;
                 isWalk = false;
                 isIdle = true;
-                forward = new Vector2(-forward.x, -forward.y);
+                forward = RandomDirection();
             }
 
             if (isIdle && IdleTimeCounter < IdleCD)
             {
                 IdleTimeCounter += dt;
             }
-            else
+            else if(isIdle && IdleTimeCounter >= IdleCD)
             {
                 IdleTimeCounter = 0;
                 isIdle = false;
                 isWalk = true;
             }
+        }
+
+        private static Vector2 RandomDirection()
+        {
+            return new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
         }
 
         public void PursuePlayer()
